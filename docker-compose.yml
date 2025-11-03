@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  # ---------- PostgreSQL ----------
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-node_react_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Backend (Fastify) ----------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: node_react_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Fastify reads these – you can also put them in a .env file
+      DATABASE_URL: postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB
+      PORT: 3000
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"          
+      # expose for local testing (optional)
+    networks:
+      - node_react_net
+
+  # ---------- Frontend (React) ----------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: node_react_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:3000"              # http
+    environment:
+      # If your React app needs to know the API URL at build time:
+      REACT_APP_API_URL: http://backend:${BACKEND_PORT:-3000} 
+    networks:
+      - node_react_net
+
+networks:
+  node_react_net:
+    driver: bridge
+
+volumes:
+  pg_data:

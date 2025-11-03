@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                 // modern JavaScript output
+    "module": "CommonJS",               // Node's module system
+    "lib": ["ES2022"],                  // standard library
+    "strict": true,                     // enable all strict checks
+    "esModuleInterop": true,            // allow default imports from CJS modules
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",                 // compiled files go here
+    "rootDir": "./src",                 // source lives under src/
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
